@@ -11,6 +11,11 @@ function removeTags(str) {
     return str.replace( /(<([^>]+)>)/ig, '');
 }
 
+//Sleep function
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /******************------------------------------------------------------------------------------------------------------------------------------------------**************/
 
 //Checks on going contests (div not sorted)
@@ -67,7 +72,7 @@ function userRating(username){
         console.log(data)
         let i = 1;
         let xVals = [];
-        let yVals = []
+        let yVals = [];
         data.result.forEach(contest =>{
             console.log("data: "+ i + " " + contest.oldRating);
             xVals.push(i);
@@ -102,48 +107,98 @@ function plotGraph(xVals,yVals,type){
 /******************------------------------------------------------------------------------------------------------------------------------------------------**************/
 
 function showBlogs(){
-    url = "https://codeforces.com/api/user.blogEntries?handle=" + document.getElementById("searchbox").value;
+    url = `https://codeforces.com/api/user.blogEntries?handle=${document.getElementById("searchbox").value}`;
     fetch(url).then((response)=>{
         return response.json();
-    }).then((data)=>{
-        console.log(data);
-        data.result.forEach(blog=>{
+    }).then(async (data)=>{
+        for(let blog of data.result){
             console.log(blog.title);
-            let comments = blogComments(blog.id);
+            await sleep(3000);
+            let comments = await blogComments(blog.id);
             let result = `${blog.title}`
             let respElement = document.getElementById("response");
             respElement.innerHTML = result;
-            let i = 1;
-            comments.forEach(comment=>{
-                let element = document.createElement(`Comment-${i}`)
-                element.innerHTML = comment;
+            console.log(comments);
+            comments.forEach( (comment)=>{
+                let element = document.createElement(`Comment`)
+                element.innerHTML += comment;
                 respElement.appendChild(element);
             })
-        })
+        }
+        // data.result.forEach(async blog=>{
+        //     console.log(blog.title);
+        //     await sleep(3000);
+            // let comments = await blogComments(blog.id);
+            // let result = `${blog.title}`
+            // let respElement = document.getElementById("response");
+            // respElement.innerHTML = result;
+            // console.log(comments)
+            // comments.forEach(comment=>{
+            //     let element = document.createElement(`Comment-${i}`)
+            //     element.innerHTML = comment;
+            //     respElement.appendChild(element);
+            // })
+        // })
     })
 }
 
-function blogComments(id){
+async function blogComments(id){
     url = "https://codeforces.com/api/blogEntry.comments?blogEntryId=" + id
-    fetch(url).then((response)=>{
+    let comments = [];
+    await fetch(url).then((response)=>{
         return response.json();
     }).then((data)=>{
-        let comments = [];
         data.result.forEach(blog=>{
             comments.push(removeTags(blog.text));
         })
-        return comments;
+        comments.push(removeTags(data.result[0].text));
     })
+    return comments;
 }
 
 /******************------------------------------------------------------------------------------------------------------------------------------------------**************/
 
-const apiKey = "7b833cbcfd3ea80d1fbf57d3a6b14bfad443de9d";
-const secret = "1bc21116afd712b03ec775c0515554d0f1e5f559";
-let time = `${Math.round(Date.now() / 1000)}`;
-function showFriends(){
-    
+async function showFriends(){
+    const apiKey = "7b833cbcfd3ea80d1fbf57d3a6b14bfad443de9d";
+    const secret = "1bc21116afd712b03ec775c0515554d0f1e5f559";
+    let time = `${Math.round(Date.now() / 1000)}`;
+    const plaintext1 = `123456/user.friends?apiKey=${apiKey}&onlyOnline=false&time=${time}#${secret}`;
+    const plaintext2 = `123456/user.friends?apiKey=${apiKey}&onlyOnline=true&time=${time}#${secret}`;
+    const hash1 = await sha512(plaintext1);
+    const hash2 = await sha512(plaintext2);
+    const url1 = "https://codeforces.com/api/user.friends?onlyOnline=false&apiKey=" + apiKey + "&time=" + time + "&apiSig=123456" + hash1;
+    const url2 = "https://codeforces.com/api/user.friends?onlyOnline=true&apiKey=" + apiKey + "&time=" + time + "&apiSig=123456" + hash2;
+
+    fetch(url1).then((response)=>{
+        return response.json();
+    }).then((data)=>{
+        document.getElementById("response").innerHTML += "All: ";
+        data.result.forEach(friend=>{
+            document.getElementById("response").innerHTML += friend + "<br>";
+        });
+        
+    })
+
+    fetch(url2).then((response)=>{
+        return response.json();
+    }).then((data)=>{
+        document.getElementById("response").innerHTML += "Online: ";
+        data.result.forEach(friend=>{
+            document.getElementById("response").innerHTML += friend;
+        });
+
+    })
 }
+
+async function sha512(str) {
+    return crypto.subtle
+      .digest("SHA-512", new TextEncoder("utf-8").encode(str))
+      .then((buf) => {
+        return Array.prototype.map
+          .call(new Uint8Array(buf), (x) => ("00" + x.toString(16)).slice(-2))
+          .join("");
+      });
+  }
 
 //contests("https://codeforces.com/api/contest.list?gym=false");
 //userSearch("https://codeforces.com/api/user.info?handles=cyberboy");

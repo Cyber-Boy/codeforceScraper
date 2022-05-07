@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <title>Document</title>
 </head>
 <body>
@@ -25,12 +26,21 @@
                 <li><span>Geek</span></li>
             </ul>
         </section>
-        <section class="container-3">
-            <div>
-                <a href="search.html">Search Users</a>
-                
+        <div class="search">
+            <div class="form">
+                <input type="text" id="searchbox" placeholder="searchuser">
+                <button type="button" onclick="userSearch()" class="searchBtn">Search</button>
+                <button type="button" onclick="showBlogs()" class="searchBtn">Show Blogs</button>
+                <button type="button" onclick="showFriends()" class="searchBtn">Show Friends</button>
             </div>
-        </section>
+            <div id="responseBox">
+                <div id="response">
+
+                </div>
+                <div class="graph">
+                    <canvas id="ratingGraph" ></canvas>
+                </div>
+            </div>
         </div>
     </main>
     <script type="text/javascript" src="assets/index.js"></script>
